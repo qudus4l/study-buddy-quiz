@@ -1,6 +1,6 @@
-# 📚 Study Buddy Quiz App
+# 📚 Study Buddy Quiz App - AI Enhanced Edition
 
-A beautiful, modern quiz application that transforms your study materials (PDF/DOCX) into interactive quizzes.
+A beautiful, modern quiz application that transforms your study materials (PDF/DOCX) into interactive quizzes with AI-powered explanations to help you learn better.
 
 ## ✅ Issues Fixed
 
@@ -30,24 +30,41 @@ All compilation errors and warnings have been resolved:
 
 ## ✨ Features
 
-- **Smart Document Parser**: Extracts questions from various formats
-  - Handles "Q:" format (as in your sample files)
-  - Recognizes numbered questions
-  - Identifies correct answers marked with "ANSWER:"
-  - Successfully tested with 182 questions from your sample file
+### 🤖 AI-Powered Learning (NEW!)
+- **Smart Explanations**: When you reveal answers, GPT provides personalized explanations for why answers are correct or incorrect
+- **Study Tips**: Get AI-generated study tips for each question to reinforce learning
+- **Hint System**: Request hints before answering to guide your thinking
 
-- **Beautiful UI**: 
-  - Modern gradient backgrounds
-  - Smooth animations
-  - Color-coded feedback (green = correct, red = incorrect)
-  - Responsive design for all devices
+### 📝 Smart Document Parser
+- Extracts questions from various formats (Q:, numbered questions, etc.)
+- Identifies correct answers marked with "ANSWER:"
+- Successfully tested with 182 questions from your sample file
+- Supports DOCX and PDF files
 
-- **Interactive Quiz**:
-  - Hide/show answers
-  - Question grid navigation
-  - Progress tracking
-  - Accuracy calculation
-  - Reset functionality
+### 🎨 Enhanced UX Features
+- **Study Timer**: Track how long you've been studying
+- **Streak Counter**: Build momentum with correct answer streaks 🔥
+- **Sound Effects**: Audio feedback for correct/incorrect answers (can be muted)
+- **Keyboard Shortcuts**: Navigate with arrow keys, press G for grid view
+- **Progress Persistence**: Your answers are saved locally
+- **Motivational Messages**: Dynamic encouragement based on performance
+- **Visual Feedback**: Beautiful animations and transitions
+
+### 💎 Beautiful UI
+- Modern gradient backgrounds with animated elements
+- Smooth animations powered by Framer Motion
+- Color-coded feedback (green = correct, red = incorrect)
+- Responsive design for all devices
+- Enhanced question cards with better visual hierarchy
+
+### 📊 Interactive Quiz Features
+- Hide/show answers with detailed explanations
+- Question grid navigation with visual status indicators
+- Real-time progress tracking
+- Accuracy calculation with visual stats
+- Study time tracking
+- Reset functionality
+- Completion celebration screen
 
 ## 📱 Mobile & Desktop Ready
 
@@ -69,7 +86,19 @@ Successfully tested with:
 - Tailwind CSS for styling
 - Framer Motion for animations
 - Mammoth for DOCX parsing
+- OpenAI API for AI explanations
+- Local Storage for progress persistence
 - Responsive design
+
+## 🔐 Environment Setup
+
+The app uses OpenAI's API for generating explanations. The API key is stored in `.env` file:
+
+```bash
+REACT_APP_OPENAI_API_KEY=your_api_key_here
+```
+
+**Note**: The `.env` file is already configured and gitignored for security.
 
 ## 📄 Supported Formats
 
