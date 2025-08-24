@@ -1,0 +1,256 @@
+import mammoth from 'mammoth';
+import { Question, Option } from '../types/quiz';
+
+export class DocumentParser {
+  private static extractQuestionsFromText(text: string): Question[] {
+    const questions: Question[] = [];
+    
+    // Split text into lines for processing
+    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line);
+    
+    let currentQuestion: Partial<Question> | null = null;
+    let questionText = '';
+    let options: Option[] = [];
+    let collectingQuestion = false;
+    let questionCounter = 0;
+    
+    // First, look for answer key section if it exists
+    const answerKey: { [key: number]: string } = {};
+    let answerSectionStart = -1;
+    
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].toLowerCase().includes('answer key') || 
+          lines[i].toLowerCase().includes('answers:') ||
+          lines[i].toLowerCase().includes('correct answers')) {
+        answerSectionStart = i;
+        break;
+      }
+    }
+    
+    if (answerSectionStart !== -1) {
+      for (let i = answerSectionStart + 1; i < lines.length; i++) {
+        const answerLine = lines[i].match(/(\d+)[\s.:)]*([A-E])/i);
+        if (answerLine) {
+          answerKey[parseInt(answerLine[1])] = answerLine[2].toUpperCase();
+        }
+      }
+    }
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Stop processing if we hit the answer key section
+      if (answerSectionStart !== -1 && i >= answerSectionStart) {
+        break;
+      }
+      
+      // Check if line starts with a question number - more flexible patterns
+      const questionMatch = line.match(/^(?:Question\s*)?(?:Q\.?\s*)?(\d+)[.:)\s]+(.+)/i) ||
+                           line.match(/^(\d+)\.\s*(.+)/) ||
+                           line.match(/^Q(\d+)[:.\s]+(.+)/i) ||
+                           line.match(/^Q:\s*(.+)/i);  // Handle "Q:" format without number
+      
+      if (questionMatch) {
+        // Save previous question if exists
+        if (currentQuestion && questionText && options.length > 0) {
+          currentQuestion.text = questionText.trim();
+          currentQuestion.options = options;
+          
+          // Try to find the answer
+          const answer = answerKey[currentQuestion.questionNumber!] || 
+                        this.findAnswer(lines, i, currentQuestion.questionNumber!);
+          if (answer) {
+            currentQuestion.correctAnswer = answer;
+          }
+          
+          questions.push(currentQuestion as Question);
+        }
+        
+        // Start new question
+        let questionNumber: number;
+        let qText: string;
+        
+        if (questionMatch[1] && !isNaN(parseInt(questionMatch[1]))) {
+          // Has a number
+          questionNumber = parseInt(questionMatch[1]);
+          qText = questionMatch[2] || '';
+        } else {
+          // No number (Q: format)
+          questionCounter++;
+          questionNumber = questionCounter;
+          qText = questionMatch[1] || questionMatch[2] || '';
+        }
+        
+        currentQuestion = {
+          id: questionNumber,
+          questionNumber: questionNumber,
+          text: '',
+          options: [],
+          correctAnswer: ''
+        };
+        
+        questionText = qText;
+        options = [];
+        collectingQuestion = true;
+        continue;
+      }
+      
+      // Check for options - handle various formats
+      const optionMatch = line.match(/^([A-E])[.:)\s]+(.+)/i) ||
+                         line.match(/^\(([A-E])\)\s*(.+)/i) ||
+                         line.match(/^([A-E])\)\s*(.+)/i);
+      
+      if (optionMatch && currentQuestion) {
+        collectingQuestion = false;
+        const letter = optionMatch[1].toUpperCase();
+        let text = optionMatch[2].trim();
+        
+        // Remove any answer indicators from the option text
+        text = text.replace(/[✓✔✅]/g, '').trim();
+        
+        // Check if this option is marked as correct
+        if (line.includes('✓') || line.includes('✔') || line.includes('✅') || 
+            line.includes('(correct)') || line.includes('*')) {
+          currentQuestion.correctAnswer = letter;
+        }
+        
+        options.push({ letter, text });
+        continue;
+      }
+      
+      // Check for inline answer indicators
+      const answerMatch = line.match(/(?:ANSWER|Answer|Correct Answer|Ans|Correct)[\s:]*([A-E])/i);
+      if (answerMatch && currentQuestion) {
+        currentQuestion.correctAnswer = answerMatch[1].toUpperCase();
+        collectingQuestion = false;  // Stop collecting question text
+        continue;
+      }
+      
+      // If we're collecting question text and haven't hit options yet
+      if (collectingQuestion && currentQuestion && !optionMatch && !answerMatch) {
+        // Don't add lines that look like they might be instructions or headers
+        if (!line.toLowerCase().includes('instructions') && 
+            !line.toLowerCase().includes('section') &&
+            !line.toLowerCase().includes('part') &&
+            line.length > 2) {
+          questionText += ' ' + line;
+        }
+      }
+    }
+    
+    // Don't forget the last question
+    if (currentQuestion && questionText && options.length > 0) {
+      currentQuestion.text = questionText.trim();
+      currentQuestion.options = options;
+      
+      // Try to find the answer from answer key
+      const answer = answerKey[currentQuestion.questionNumber!];
+      if (answer) {
+        currentQuestion.correctAnswer = answer;
+      }
+      
+      questions.push(currentQuestion as Question);
+    }
+    
+    console.log(`Extracted ${questions.length} questions`);
+    console.log('Answer key:', answerKey);
+    
+    return questions;
+  }
+  
+  private static findAnswer(lines: string[], startIndex: number, questionNumber: number): string | null {
+    // Look ahead for answer pattern
+    for (let i = startIndex; i < Math.min(startIndex + 10, lines.length); i++) {
+      const line = lines[i];
+      
+      // Direct answer pattern
+      const answerMatch = line.match(/(?:Answer|Correct Answer|Ans)[\s:]*([A-E])/i);
+      if (answerMatch) {
+        return answerMatch[1].toUpperCase();
+      }
+      
+      // Check for checkmark or other indicators next to options
+      const markedOption = line.match(/^([A-E])[.:)].+[✓✔]/i);
+      if (markedOption) {
+        return markedOption[1].toUpperCase();
+      }
+    }
+    
+    // Check if there's an answer key section
+    const answerKeyPattern = new RegExp(`${questionNumber}[.\\s:)]*([A-E])`, 'i');
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].toLowerCase().includes('answer') || lines[i].toLowerCase().includes('key')) {
+        for (let j = i; j < Math.min(i + 50, lines.length); j++) {
+          const match = lines[j].match(answerKeyPattern);
+          if (match) {
+            return match[1].toUpperCase();
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+  
+  static async parseDocx(file: File): Promise<Question[]> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          const questions = this.extractQuestionsFromText(result.value);
+          resolve(questions);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+      
+      reader.readAsArrayBuffer(file);
+    });
+  }
+  
+  static async parsePdf(file: File): Promise<Question[]> {
+    // For PDF parsing, we'll use a simpler approach
+    // In a production app, you'd want to use pdf.js or similar
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          // This is a placeholder - in production, you'd use proper PDF parsing
+          // For now, we'll focus on DOCX since that's what the sample files are
+          console.log('PDF parsing not fully implemented yet');
+          resolve([]);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+      
+      reader.readAsArrayBuffer(file);
+    });
+  }
+  
+  static async parseDocument(file: File): Promise<Question[]> {
+    const fileType = file.type;
+    const fileName = file.name.toLowerCase();
+    
+    if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+        fileName.endsWith('.docx')) {
+      return this.parseDocx(file);
+    } else if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+      return this.parsePdf(file);
+    } else {
+      throw new Error('Unsupported file type. Please upload a PDF or DOCX file.');
+    }
+  }
+}

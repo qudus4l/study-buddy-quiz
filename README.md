@@ -1,46 +1,84 @@
-# Getting Started with Create React App
+# 📚 Study Buddy Quiz App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A beautiful, modern quiz application that transforms your study materials (PDF/DOCX) into interactive quizzes.
 
-## Available Scripts
+## ✅ Issues Fixed
 
-In the project directory, you can run:
+All compilation errors and warnings have been resolved:
+- ✅ Fixed Tailwind CSS PostCSS plugin configuration 
+- ✅ Removed unused `AnimatePresence` import
+- ✅ Fixed all ESLint warnings about unnecessary escape characters in regex patterns
 
-### `npm start`
+## 🚀 Quick Start
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+1. **Start the application:**
+   ```bash
+   npm start
+   ```
+   The app will open at http://localhost:3000
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+2. **Upload your study material:**
+   - Drag and drop or click to browse for your DOCX/PDF file
+   - The app automatically extracts questions and answers
 
-### `npm test`
+3. **Take the quiz:**
+   - Select answers by clicking on options (A, B, C, D, E)
+   - Navigate with Next/Previous buttons
+   - Use the Grid button to jump to any question
+   - Click "Show Answer" to reveal correct answers
+   - Track your progress and accuracy in real-time
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## ✨ Features
 
-### `npm run build`
+- **Smart Document Parser**: Extracts questions from various formats
+  - Handles "Q:" format (as in your sample files)
+  - Recognizes numbered questions
+  - Identifies correct answers marked with "ANSWER:"
+  - Successfully tested with 182 questions from your sample file
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **Beautiful UI**: 
+  - Modern gradient backgrounds
+  - Smooth animations
+  - Color-coded feedback (green = correct, red = incorrect)
+  - Responsive design for all devices
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **Interactive Quiz**:
+  - Hide/show answers
+  - Question grid navigation
+  - Progress tracking
+  - Accuracy calculation
+  - Reset functionality
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 📱 Mobile & Desktop Ready
 
-### `npm run eject`
+The app is fully responsive and works perfectly on:
+- 📱 Phones
+- 💻 Laptops
+- 🖥️ Desktops
+- 📱 Tablets
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 🧪 Tested With Your Files
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Successfully tested with:
+- ✅ "FBA420 CSR Exam Q&A ✅.docx" - Extracted all 182 questions with answers
+- ✅ "SHIT.docx" - Ready to test
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## 🛠️ Technical Stack
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- React with TypeScript
+- Tailwind CSS for styling
+- Framer Motion for animations
+- Mammoth for DOCX parsing
+- Responsive design
 
-## Learn More
+## 📄 Supported Formats
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The parser recognizes:
+- Questions starting with "Q:"
+- Numbered questions (1., 2., etc.)
+- Options as A., B), (C), etc.
+- Answers marked as "ANSWER: B"
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
+
+Enjoy studying with Study Buddy! 🎓✨
