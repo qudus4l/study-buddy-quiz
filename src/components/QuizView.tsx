@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BookOpen, Home, Trophy, Target, Clock, RefreshCw, Volume2, VolumeX, Menu, X, Shuffle } from 'lucide-react';
 import { Question } from '../types/quiz';
 import { shuffleArray } from '../utils/shuffleArray';
+import { randomizeAllOptions } from '../utils/randomizeOptions';
 import QuizQuestion from './QuizQuestion';
 import QuizNavigation from './QuizNavigation';
 
@@ -114,15 +115,22 @@ const QuizView: React.FC<QuizViewProps> = ({ questions: initialQuestions, onBack
     setShowQuestionGrid(!showQuestionGrid);
   };
 
-  const handleReshuffle = () => {
+  const handleReshuffle = (reshuffleOptions: boolean = true) => {
     // Save current question to find it after shuffle
     const currentQ = questions[currentQuestionIndex];
     
-    // Shuffle questions
-    const shuffled = shuffleArray(questions);
+    let shuffled = [...questions];
+    
+    // Reshuffle options within each question if requested
+    if (reshuffleOptions) {
+      shuffled = randomizeAllOptions(shuffled);
+    }
+    
+    // Shuffle question order
+    shuffled = shuffleArray(shuffled);
     setQuestions(shuffled);
     
-    // Find the new index of the current question
+    // Find the new index of the current question (by ID since options may have changed)
     const newIndex = shuffled.findIndex(q => q.id === currentQ.id);
     setCurrentQuestionIndex(newIndex !== -1 ? newIndex : 0);
     
@@ -183,13 +191,13 @@ const QuizView: React.FC<QuizViewProps> = ({ questions: initialQuestions, onBack
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleReshuffle}
+                onClick={() => handleReshuffle()}
                 className="p-2 rounded-lg hover:bg-indigo-100 transition-colors group relative"
-                title="Reshuffle Questions"
+                title="Reshuffle Questions & Options"
               >
                 <Shuffle className={`w-5 h-5 text-indigo-600 ${hasBeenReshuffled ? '' : 'group-hover:animate-spin'}`} />
                 {hasBeenReshuffled && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full"></span>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
                 )}
               </motion.button>
 
@@ -281,9 +289,9 @@ const QuizView: React.FC<QuizViewProps> = ({ questions: initialQuestions, onBack
                   className="flex items-center space-x-2 w-full px-3 py-2 text-left hover:bg-indigo-50 rounded"
                 >
                   <Shuffle className="w-4 h-4 text-indigo-600" />
-                  <span className="text-sm">Reshuffle Questions</span>
+                  <span className="text-sm">Reshuffle All</span>
                   {hasBeenReshuffled && (
-                    <span className="text-xs text-indigo-500 ml-auto">✓</span>
+                    <span className="text-xs text-indigo-500 ml-auto">🎲</span>
                   )}
                 </button>
 

@@ -1,9 +1,10 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Sparkles, Shuffle } from 'lucide-react';
+import { BookOpen, Sparkles, Shuffle, RotateCw } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import { DocumentParser } from './utils/documentParser';
 import { shuffleArray } from './utils/shuffleArray';
+import { randomizeAllOptions } from './utils/randomizeOptions';
 import { Question } from './types/quiz';
 
 // Lazy load QuizView for better initial load performance
@@ -25,6 +26,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [randomizeQuestions, setRandomizeQuestions] = useState(true); // Default to randomized
+  const [randomizeOptions, setRandomizeOptions] = useState(true); // Default to randomized options
 
   const handleFileUpload = async (file: File) => {
     setIsLoading(true);
@@ -37,7 +39,13 @@ function App() {
         throw new Error('No questions found in the document. Please check the format.');
       }
 
-      // Randomize questions if enabled
+      // Randomize options within each question if enabled
+      if (randomizeOptions) {
+        extractedQuestions = randomizeAllOptions(extractedQuestions);
+        console.log('Options within questions randomized!');
+      }
+
+      // Randomize question order if enabled
       if (randomizeQuestions) {
         extractedQuestions = shuffleArray(extractedQuestions);
         console.log('Questions randomized for better learning!');
@@ -127,35 +135,60 @@ function App() {
           </motion.div>
         </motion.div>
 
-        {/* Randomization Toggle */}
+        {/* Randomization Toggles */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.4 }}
-          className="mb-6 flex flex-col items-center space-y-2"
+          className="mb-6 flex flex-col items-center space-y-3"
         >
-          <button
-            onClick={() => setRandomizeQuestions(!randomizeQuestions)}
-            className={`
-              flex items-center space-x-2 px-4 py-2 rounded-full transition-all transform hover:scale-105
-              ${randomizeQuestions 
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' 
-                : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-indigo-400'
-              }
-            `}
-          >
-            <Shuffle className={`w-4 h-4 ${randomizeQuestions ? 'animate-pulse' : ''}`} />
-            <span className="text-sm font-medium">
-              {randomizeQuestions ? '🎲 Randomize: ON' : '📝 Randomize: OFF'}
-            </span>
-          </button>
-          {randomizeQuestions && (
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Question Order Randomization */}
+            <button
+              onClick={() => setRandomizeQuestions(!randomizeQuestions)}
+              className={`
+                flex items-center space-x-2 px-4 py-2 rounded-full transition-all transform hover:scale-105
+                ${randomizeQuestions 
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' 
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-indigo-400'
+                }
+              `}
+            >
+              <Shuffle className={`w-4 h-4 ${randomizeQuestions ? 'animate-pulse' : ''}`} />
+              <span className="text-sm font-medium">
+                {randomizeQuestions ? '🎲 Shuffle Questions' : '📝 Keep Order'}
+              </span>
+            </button>
+
+            {/* Option Order Randomization */}
+            <button
+              onClick={() => setRandomizeOptions(!randomizeOptions)}
+              className={`
+                flex items-center space-x-2 px-4 py-2 rounded-full transition-all transform hover:scale-105
+                ${randomizeOptions 
+                  ? 'bg-gradient-to-r from-green-600 to-teal-600 text-white shadow-lg' 
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-green-400'
+                }
+              `}
+            >
+              <RotateCw className={`w-4 h-4 ${randomizeOptions ? 'animate-spin-slow' : ''}`} />
+              <span className="text-sm font-medium">
+                {randomizeOptions ? '🔄 Shuffle Options' : '🔢 Keep A-B-C-D'}
+              </span>
+            </button>
+          </div>
+          
+          {(randomizeQuestions || randomizeOptions) && (
             <motion.p
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-xs text-gray-500 text-center max-w-xs"
+              className="text-xs text-gray-500 text-center max-w-md"
             >
-              Questions will be shuffled for better learning and to prevent pattern memorization
+              {randomizeQuestions && randomizeOptions 
+                ? 'Both question order and option positions will be randomized for maximum learning effectiveness'
+                : randomizeQuestions 
+                ? 'Questions will be shuffled to prevent pattern memorization'
+                : 'Option positions (A, B, C, D) will be randomized within each question'}
             </motion.p>
           )}
         </motion.div>

@@ -43,10 +43,13 @@ All compilation errors and warnings have been resolved:
 - Supports DOCX and PDF files
 
 ### 🎨 Enhanced UX Features
-- **Question Randomization**: Shuffle questions to prevent pattern memorization 🎲
-  - Toggle on/off before uploading
-  - Reshuffle anytime during quiz
-  - Maintains your progress when reshuffling
+- **Dual Randomization System**: Maximum learning effectiveness 🎲
+  - **Question Order Randomization**: Shuffle the sequence of questions
+  - **Option Position Randomization**: Shuffle A, B, C, D positions within each question
+  - Both can be toggled independently before uploading
+  - Reshuffle both anytime during the quiz
+  - Correct answers are automatically tracked through shuffling
+  - Your progress is maintained when reshuffling
 - **Study Timer**: Track how long you've been studying
 - **Streak Counter**: Build momentum with correct answer streaks 🔥
 - **Sound Effects**: Audio feedback for correct/incorrect answers (can be muted)
