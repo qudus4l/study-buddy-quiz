@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpen, Home, Trophy, Target, Clock, RefreshCw, Volume2, VolumeX, Menu, X } from 'lucide-react';
+import { BookOpen, Home, Trophy, Target, Clock, RefreshCw, Volume2, VolumeX, Menu, X, Shuffle } from 'lucide-react';
 import { Question } from '../types/quiz';
+import { shuffleArray } from '../utils/shuffleArray';
 import QuizQuestion from './QuizQuestion';
 import QuizNavigation from './QuizNavigation';
 
@@ -10,7 +11,8 @@ interface QuizViewProps {
   onBack: () => void;
 }
 
-const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
+const QuizView: React.FC<QuizViewProps> = ({ questions: initialQuestions, onBack }) => {
+  const [questions, setQuestions] = useState(initialQuestions);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
   const [showAnswers, setShowAnswers] = useState<{ [key: number]: boolean }>({});
@@ -20,6 +22,7 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
   const [streak, setStreak] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hasBeenReshuffled, setHasBeenReshuffled] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const currentQuestionId = currentQuestion.id;
@@ -111,6 +114,26 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
     setShowQuestionGrid(!showQuestionGrid);
   };
 
+  const handleReshuffle = () => {
+    // Save current question to find it after shuffle
+    const currentQ = questions[currentQuestionIndex];
+    
+    // Shuffle questions
+    const shuffled = shuffleArray(questions);
+    setQuestions(shuffled);
+    
+    // Find the new index of the current question
+    const newIndex = shuffled.findIndex(q => q.id === currentQ.id);
+    setCurrentQuestionIndex(newIndex !== -1 ? newIndex : 0);
+    
+    setHasBeenReshuffled(true);
+    
+    // Play sound effect if enabled
+    if (soundEnabled) {
+      playSound('select');
+    }
+  };
+
   // Calculate statistics
   const answeredQuestions = Object.keys(userAnswers).length;
   const correctAnswers = Object.entries(userAnswers).filter(
@@ -157,6 +180,19 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
             
             {/* Desktop Controls */}
             <div className="hidden md:flex items-center space-x-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleReshuffle}
+                className="p-2 rounded-lg hover:bg-indigo-100 transition-colors group relative"
+                title="Reshuffle Questions"
+              >
+                <Shuffle className={`w-5 h-5 text-indigo-600 ${hasBeenReshuffled ? '' : 'group-hover:animate-spin'}`} />
+                {hasBeenReshuffled && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full"></span>
+                )}
+              </motion.button>
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -237,6 +273,20 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
                 exit={{ height: 0, opacity: 0 }}
                 className="md:hidden border-t py-3 space-y-2"
               >
+                <button
+                  onClick={() => {
+                    handleReshuffle();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-left hover:bg-indigo-50 rounded"
+                >
+                  <Shuffle className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm">Reshuffle Questions</span>
+                  {hasBeenReshuffled && (
+                    <span className="text-xs text-indigo-500 ml-auto">✓</span>
+                  )}
+                </button>
+
                 <button
                   onClick={() => {
                     setSoundEnabled(!soundEnabled);

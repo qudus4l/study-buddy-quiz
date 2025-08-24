@@ -43,6 +43,10 @@ All compilation errors and warnings have been resolved:
 - Supports DOCX and PDF files
 
 ### 🎨 Enhanced UX Features
+- **Question Randomization**: Shuffle questions to prevent pattern memorization 🎲
+  - Toggle on/off before uploading
+  - Reshuffle anytime during quiz
+  - Maintains your progress when reshuffling
 - **Study Timer**: Track how long you've been studying
 - **Streak Counter**: Build momentum with correct answer streaks 🔥
 - **Sound Effects**: Audio feedback for correct/incorrect answers (can be muted)
