@@ -31,9 +31,10 @@ All compilation errors and warnings have been resolved:
 ## ✨ Features
 
 ### 🤖 AI-Powered Learning (NEW!)
-- **Smart Explanations**: When you reveal answers, GPT provides personalized explanations for why answers are correct or incorrect
-- **Study Tips**: Get AI-generated study tips for each question to reinforce learning
+- **Smart Explanations**: When you get an answer wrong, GPT provides personalized explanations to help you understand (API credits saved by only explaining incorrect answers)
+- **Study Tips**: Get AI-generated study tips for incorrect answers to reinforce learning
 - **Hint System**: Request hints before answering to guide your thinking
+- **Efficient API Usage**: Only generates explanations for incorrect answers to save credits
 
 ### 📝 Smart Document Parser
 - Extracts questions from various formats (Q:, numbered questions, etc.)

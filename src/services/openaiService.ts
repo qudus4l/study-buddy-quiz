@@ -19,11 +19,11 @@ export class OpenAIService {
     userAnswer: string
   ): Promise<ExplanationResponse> {
     try {
-      const isCorrect = userAnswer === correctAnswer;
+      // This function should only be called for incorrect answers to save API credits
       const correctOption = options.find(opt => opt.letter === correctAnswer);
       const userOption = options.find(opt => opt.letter === userAnswer);
 
-      const prompt = `You are a helpful study tutor using the gpt-5-nano-2025-08-07 model. A student has answered a multiple-choice question.
+      const prompt = `You are a helpful study tutor. A student has answered a multiple-choice question incorrectly.
 
 Question: ${question}
 
@@ -31,11 +31,9 @@ Options:
 ${options.map(opt => `${opt.letter}. ${opt.text}`).join('\n')}
 
 Correct Answer: ${correctAnswer}. ${correctOption?.text}
-Student's Answer: ${userAnswer}. ${userOption?.text}
+Student's Wrong Answer: ${userAnswer}. ${userOption?.text}
 
-${isCorrect 
-  ? `The student got it RIGHT! Provide a brief, encouraging explanation of why this is the correct answer.`
-  : `The student got it WRONG. Explain why their answer "${userAnswer}" is incorrect and why "${correctAnswer}" is the correct answer. Be encouraging and help them understand the concept.`}
+Explain why their answer "${userAnswer}" is incorrect and why "${correctAnswer}" is the correct answer. Be encouraging and help them understand the concept.
 
 Keep your response concise (2-3 sentences max) and educational. Focus on the key concept that makes the correct answer right.
 
@@ -88,12 +86,9 @@ Also suggest 1-2 quick study tips related to this topic.`;
     } catch (error) {
       console.error('Error generating explanation:', error);
       
-      // Fallback explanation if API fails
-      const isCorrect = userAnswer === correctAnswer;
+      // Fallback explanation if API fails (only for incorrect answers)
       return {
-        explanation: isCorrect 
-          ? `Great job! You correctly identified that ${correctAnswer} is the right answer. This shows good understanding of the concept.`
-          : `The correct answer is ${correctAnswer}. Take time to review why this option is correct and how it differs from ${userAnswer}.`,
+        explanation: `The correct answer is ${correctAnswer}. Your answer ${userAnswer} was not quite right. Take time to review why ${correctAnswer} is correct and understand the key differences between the options.`,
         studyTips: [
           'Review this topic in your study materials',
           'Try more practice questions on this concept'

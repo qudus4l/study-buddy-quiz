@@ -34,11 +34,11 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   }, [question.id]);
 
   useEffect(() => {
-    // Generate explanation when answer is revealed
-    if (showAnswer && selectedAnswer && !explanation) {
+    // Generate explanation only when answer is revealed AND incorrect
+    if (showAnswer && selectedAnswer && !explanation && !isCorrect) {
       generateExplanation();
     }
-  }, [showAnswer, selectedAnswer]);
+  }, [showAnswer, selectedAnswer, isCorrect]);
 
   const generateExplanation = async () => {
     if (!selectedAnswer) return;
@@ -289,15 +289,15 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
               </div>
             </motion.div>
 
-            {/* AI Explanation */}
-            {isLoadingExplanation ? (
+            {/* AI Explanation - Only for incorrect answers */}
+            {!isCorrect && isLoadingExplanation ? (
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center space-x-3">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-500 border-t-transparent"></div>
                   <p className="text-gray-600">Generating explanation...</p>
                 </div>
               </div>
-            ) : explanation ? (
+            ) : !isCorrect && explanation ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -336,6 +336,24 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
                     </div>
                   </div>
                 )}
+              </motion.div>
+            ) : isCorrect ? (
+              // Simple success message for correct answers (no API call needed)
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="p-4 bg-green-50 border border-green-200 rounded-xl"
+              >
+                <div className="flex items-start space-x-3">
+                  <span className="text-2xl">🎯</span>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-green-900">Perfect! You nailed it!</p>
+                    <p className="text-sm text-green-800">
+                      Great understanding of this concept. Keep up the excellent work!
+                    </p>
+                  </div>
+                </div>
               </motion.div>
             ) : null}
           </motion.div>
