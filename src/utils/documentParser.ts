@@ -56,11 +56,12 @@ export class DocumentParser {
           currentQuestion.text = questionText.trim();
           currentQuestion.options = options;
           
-          // Try to find the answer
-          const answer = answerKey[currentQuestion.questionNumber!] || 
-                        this.findAnswer(lines, i, currentQuestion.questionNumber!);
-          if (answer) {
-            currentQuestion.correctAnswer = answer;
+          // Only look for answer if we haven't found it already
+          if (!currentQuestion.correctAnswer) {
+            const answer = answerKey[currentQuestion.questionNumber!];
+            if (answer) {
+              currentQuestion.correctAnswer = answer;
+            }
           }
           
           questions.push(currentQuestion as Question);
@@ -118,8 +119,9 @@ export class DocumentParser {
         continue;
       }
       
-      // Check for inline answer indicators
-      const answerMatch = line.match(/(?:ANSWER|Answer|Correct Answer|Ans|Correct)[\s:]*([A-E])/i);
+      // Check for inline answer indicators - handle extra spaces after colon
+      // Pattern matches "ANSWER:  B" format with multiple spaces
+      const answerMatch = line.match(/ANSWER\s*:\s*([A-E])/i);
       if (answerMatch && currentQuestion) {
         currentQuestion.correctAnswer = answerMatch[1].toUpperCase();
         collectingQuestion = false;  // Stop collecting question text
@@ -143,17 +145,16 @@ export class DocumentParser {
       currentQuestion.text = questionText.trim();
       currentQuestion.options = options;
       
-      // Try to find the answer from answer key
-      const answer = answerKey[currentQuestion.questionNumber!];
-      if (answer) {
-        currentQuestion.correctAnswer = answer;
+      // Try to find the answer from answer key or already set answer
+      if (!currentQuestion.correctAnswer) {
+        const answer = answerKey[currentQuestion.questionNumber!];
+        if (answer) {
+          currentQuestion.correctAnswer = answer;
+        }
       }
       
       questions.push(currentQuestion as Question);
     }
-    
-    console.log(`Extracted ${questions.length} questions`);
-    console.log('Answer key:', answerKey);
     
     return questions;
   }
