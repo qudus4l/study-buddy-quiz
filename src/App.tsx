@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Sparkles } from 'lucide-react';
 import FileUpload from './components/FileUpload';
-import QuizView from './components/QuizView';
 import { DocumentParser } from './utils/documentParser';
 import { Question } from './types/quiz';
+
+// Lazy load QuizView for better initial load performance
+const QuizView = lazy(() => import('./components/QuizView'));
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading quiz...</p>
+    </div>
+  </div>
+);
 
 function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -27,7 +39,6 @@ function App() {
       setShowQuiz(true);
       
       console.log(`Successfully extracted ${extractedQuestions.length} questions`);
-      console.log('Sample question:', extractedQuestions[0]);
     } catch (err) {
       console.error('Error parsing document:', err);
       setError(err instanceof Error ? err.message : 'Failed to parse document');
@@ -43,12 +54,16 @@ function App() {
   };
 
   if (showQuiz && questions.length > 0) {
-    return <QuizView questions={questions} onBack={handleBackToUpload} />;
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <QuizView questions={questions} onBack={handleBackToUpload} />
+      </Suspense>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Animated Background Elements */}
+      {/* Animated Background Elements - Optimized with will-change */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{
@@ -60,6 +75,7 @@ function App() {
             repeat: Infinity,
             ease: 'linear',
           }}
+          style={{ willChange: 'transform' }}
           className="absolute -top-20 -left-20 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
         />
         <motion.div
@@ -72,6 +88,7 @@ function App() {
             repeat: Infinity,
             ease: 'linear',
           }}
+          style={{ willChange: 'transform' }}
           className="absolute -bottom-20 -right-20 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
         />
       </div>
@@ -91,7 +108,7 @@ function App() {
             </h1>
           </div>
           <p className="text-lg text-gray-600 max-w-md mx-auto">
-            Transform your study materials into interactive quizzes. Upload a PDF or DOCX file to get started.
+            Transform your study materials into interactive quizzes with AI-powered explanations.
           </p>
           <motion.div
             animate={{ rotate: [0, 360] }}
@@ -117,11 +134,11 @@ function App() {
         >
           <div className="text-center">
             <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">📚</span>
+              <span className="text-2xl">🤖</span>
             </div>
-            <h3 className="font-semibold text-gray-800">Smart Extraction</h3>
+            <h3 className="font-semibold text-gray-800">AI Explanations</h3>
             <p className="text-sm text-gray-600 mt-1">
-              Automatically detects questions and answers from your documents
+              Get personalized explanations for incorrect answers
             </p>
           </div>
           <div className="text-center">
@@ -130,7 +147,7 @@ function App() {
             </div>
             <h3 className="font-semibold text-gray-800">Interactive Quiz</h3>
             <p className="text-sm text-gray-600 mt-1">
-              Test yourself with instant feedback and progress tracking
+              Track progress with streaks, timers, and instant feedback
             </p>
           </div>
           <div className="text-center">
@@ -139,7 +156,7 @@ function App() {
             </div>
             <h3 className="font-semibold text-gray-800">Responsive Design</h3>
             <p className="text-sm text-gray-600 mt-1">
-              Works perfectly on your phone, tablet, and laptop
+              Study anywhere on phone, tablet, or laptop
             </p>
           </div>
         </motion.div>

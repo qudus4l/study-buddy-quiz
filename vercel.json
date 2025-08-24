@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "name": "study-buddy-quiz",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      },
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_OPENAI_API_KEY": "@openai_api_key"
+  },
+  "build": {
+    "env": {
+      "REACT_APP_OPENAI_API_KEY": "@openai_api_key"
+    }
+  }
+}

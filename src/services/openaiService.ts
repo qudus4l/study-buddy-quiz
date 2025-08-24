@@ -1,9 +1,30 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // Note: In production, use a backend proxy
-});
+// Initialize OpenAI with error handling
+const initOpenAI = () => {
+  const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+  
+  if (!apiKey || apiKey === 'your_api_key_here') {
+    console.warn('OpenAI API key not configured. AI features will be limited.');
+    return null;
+  }
+  
+  try {
+    return new OpenAI({
+      apiKey,
+      dangerouslyAllowBrowser: true // Note: In production, use a backend proxy
+    });
+  } catch (error) {
+    console.error('Failed to initialize OpenAI:', error);
+    return null;
+  }
+};
+
+const openai = initOpenAI();
+
+// Cache for storing generated explanations to avoid duplicate API calls
+const explanationCache = new Map<string, ExplanationResponse>();
+const hintCache = new Map<string, string>();
 
 export interface ExplanationResponse {
   explanation: string;
@@ -12,12 +33,29 @@ export interface ExplanationResponse {
 }
 
 export class OpenAIService {
+  private static getCacheKey(question: string, userAnswer: string, correctAnswer: string): string {
+    return `${question}-${userAnswer}-${correctAnswer}`;
+  }
+
   static async generateExplanation(
     question: string,
     options: { letter: string; text: string }[],
     correctAnswer: string,
     userAnswer: string
   ): Promise<ExplanationResponse> {
+    // Check cache first
+    const cacheKey = this.getCacheKey(question, userAnswer, correctAnswer);
+    if (explanationCache.has(cacheKey)) {
+      return explanationCache.get(cacheKey)!;
+    }
+
+    // If OpenAI is not initialized, return fallback
+    if (!openai) {
+      const fallback = this.getFallbackExplanation(correctAnswer, userAnswer);
+      explanationCache.set(cacheKey, fallback);
+      return fallback;
+    }
+
     try {
       // This function should only be called for incorrect answers to save API credits
       const correctOption = options.find(opt => opt.letter === correctAnswer);
@@ -40,7 +78,7 @@ Keep your response concise (2-3 sentences max) and educational. Focus on the key
 Also suggest 1-2 quick study tips related to this topic.`;
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo', // Using available model as gpt-5-nano might not be available
+        model: 'gpt-3.5-turbo',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 200,
         temperature: 0.7,
@@ -76,31 +114,54 @@ Also suggest 1-2 quick study tips related to this topic.`;
         }
       }
 
-      return {
+      const result = {
         explanation,
         studyTips: studyTips.length > 0 ? studyTips : [
           'Review this concept in your study materials',
           'Practice similar questions to reinforce your understanding'
         ]
       };
+
+      // Cache the result
+      explanationCache.set(cacheKey, result);
+      return result;
     } catch (error) {
       console.error('Error generating explanation:', error);
       
-      // Fallback explanation if API fails (only for incorrect answers)
-      return {
-        explanation: `The correct answer is ${correctAnswer}. Your answer ${userAnswer} was not quite right. Take time to review why ${correctAnswer} is correct and understand the key differences between the options.`,
-        studyTips: [
-          'Review this topic in your study materials',
-          'Try more practice questions on this concept'
-        ]
-      };
+      // Return fallback and cache it
+      const fallback = this.getFallbackExplanation(correctAnswer, userAnswer);
+      explanationCache.set(cacheKey, fallback);
+      return fallback;
     }
+  }
+
+  private static getFallbackExplanation(correctAnswer: string, userAnswer: string): ExplanationResponse {
+    return {
+      explanation: `The correct answer is ${correctAnswer}. Your answer ${userAnswer} was not quite right. Take time to review why ${correctAnswer} is correct and understand the key differences between the options.`,
+      studyTips: [
+        'Review this topic in your study materials',
+        'Try more practice questions on this concept'
+      ]
+    };
   }
 
   static async generateQuestionHint(
     question: string,
     options: { letter: string; text: string }[]
   ): Promise<string> {
+    // Check cache first
+    const cacheKey = question;
+    if (hintCache.has(cacheKey)) {
+      return hintCache.get(cacheKey)!;
+    }
+
+    // If OpenAI is not initialized, return fallback
+    if (!openai) {
+      const fallback = 'Consider each option carefully and eliminate those that don\'t fit.';
+      hintCache.set(cacheKey, fallback);
+      return fallback;
+    }
+
     try {
       const prompt = `Provide a brief, helpful hint for this question without giving away the answer:
 
@@ -116,10 +177,22 @@ Give a subtle hint that guides thinking without revealing the answer. Keep it to
         temperature: 0.7,
       });
 
-      return response.choices[0].message.content || 'Think about the key concepts involved in this question.';
+      const hint = response.choices[0].message.content || 'Think about the key concepts involved in this question.';
+      
+      // Cache the hint
+      hintCache.set(cacheKey, hint);
+      return hint;
     } catch (error) {
       console.error('Error generating hint:', error);
-      return 'Consider each option carefully and eliminate those that don\'t fit.';
+      const fallback = 'Consider each option carefully and eliminate those that don\'t fit.';
+      hintCache.set(cacheKey, fallback);
+      return fallback;
     }
+  }
+
+  // Clear cache method for memory management
+  static clearCache() {
+    explanationCache.clear();
+    hintCache.clear();
   }
 }
