@@ -25,7 +25,7 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
   showQuestionGrid,
   onToggleGrid,
 }) => {
-  // Keyboard shortcuts hint
+  // Keyboard shortcuts hint - only on desktop
   React.useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft' && currentIndex > 0) {
@@ -64,16 +64,16 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
 
   return (
     <>
-      {/* Navigation Controls */}
+      {/* Navigation Controls - Mobile Optimized */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onPrevious}
             disabled={currentIndex === 0}
             className={`
-              flex items-center space-x-2 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm
+              flex items-center space-x-1 sm:space-x-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium transition-all shadow-sm text-sm sm:text-base
               ${
                 currentIndex === 0
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
@@ -81,8 +81,9 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
               }
             `}
           >
-            <ChevronLeft className="w-5 h-5" />
-            <span>Previous</span>
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Previous</span>
+            <span className="sm:hidden">Prev</span>
           </motion.button>
 
           <motion.button
@@ -91,7 +92,7 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
             onClick={onNext}
             disabled={currentIndex === totalQuestions - 1}
             className={`
-              flex items-center space-x-2 px-5 py-2.5 rounded-xl font-medium transition-all shadow-md
+              flex items-center space-x-1 sm:space-x-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium transition-all shadow-md text-sm sm:text-base
               ${
                 currentIndex === totalQuestions - 1
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
@@ -100,48 +101,48 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
             `}
           >
             <span>Next</span>
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </motion.button>
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Keyboard Shortcuts Hint */}
+          {/* Keyboard Shortcuts Hint - Desktop Only */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="hidden sm:flex items-center space-x-1 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-500"
+            className="hidden lg:flex items-center space-x-1 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-500"
           >
             <Keyboard className="w-3 h-3" />
-            <span>← → to navigate, G for grid</span>
+            <span>← → or G</span>
           </motion.div>
 
           <motion.button
             whileHover={{ scale: 1.05, rotate: showQuestionGrid ? -90 : 0 }}
             whileTap={{ scale: 0.95 }}
             onClick={onToggleGrid}
-            className={`p-2.5 rounded-xl border-2 transition-all ${
+            className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl border-2 transition-all ${
               showQuestionGrid 
                 ? 'bg-indigo-100 border-indigo-300 text-indigo-700' 
                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
             title="Question Grid (G)"
           >
-            <Grid className="w-5 h-5" />
+            <Grid className="w-4 h-4 sm:w-5 sm:h-5" />
           </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.05, rotate: 180 }}
             whileTap={{ scale: 0.95 }}
             onClick={onReset}
-            className="p-2.5 rounded-xl bg-white border-2 border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all"
+            className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-white border-2 border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all"
             title="Reset Quiz"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
           </motion.button>
         </div>
       </div>
 
-      {/* Question Grid */}
+      {/* Question Grid - Mobile Optimized */}
       <AnimatePresence>
         {showQuestionGrid && (
           <motion.div
@@ -149,14 +150,14 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, y: -20, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="mt-6 p-6 bg-white rounded-xl shadow-xl border border-gray-200"
+            className="mt-4 sm:mt-6 p-4 sm:p-6 bg-white rounded-lg sm:rounded-xl shadow-xl border border-gray-200"
           >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700">Jump to Question</h3>
-              <div className="flex items-center space-x-4 text-xs">
+            <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Jump to Question</h3>
+              <div className="flex items-center space-x-3 sm:space-x-4 text-xs">
                 <div className="flex items-center space-x-1">
                   <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
-                  <span className="text-gray-500">Answered</span>
+                  <span className="text-gray-500">Done</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <div className="w-3 h-3 bg-indigo-600 rounded"></div>
@@ -164,12 +165,12 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
                 </div>
                 <div className="flex items-center space-x-1">
                   <div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded"></div>
-                  <span className="text-gray-500">Not Answered</span>
+                  <span className="text-gray-500">Todo</span>
                 </div>
               </div>
             </div>
             
-            <div className="grid grid-cols-10 sm:grid-cols-15 gap-2">
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-2">
               {Array.from({ length: totalQuestions }, (_, i) => {
                 const status = getQuestionStatus(i);
                 const isAnswered = userAnswers[i + 1] !== undefined;
@@ -190,7 +191,7 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
                       onToggleGrid();
                     }}
                     className={`
-                      relative w-10 h-10 rounded-lg font-semibold text-sm transition-all
+                      relative w-full aspect-square rounded-md sm:rounded-lg font-semibold text-xs sm:text-sm transition-all
                       flex items-center justify-center
                       ${getStatusColor(status)}
                     `}
@@ -200,7 +201,7 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"
+                        className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full"
                       />
                     )}
                   </motion.button>
@@ -208,21 +209,21 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
               })}
             </div>
 
-            {/* Quick Stats in Grid */}
-            <div className="mt-4 pt-4 border-t border-gray-200 flex justify-around text-sm">
+            {/* Quick Stats in Grid - Mobile Optimized */}
+            <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-3 gap-2 text-xs sm:text-sm">
               <div className="text-center">
                 <p className="font-semibold text-green-600">{Object.keys(userAnswers).length}</p>
-                <p className="text-xs text-gray-500">Answered</p>
+                <p className="text-xs text-gray-500">Done</p>
               </div>
               <div className="text-center">
                 <p className="font-semibold text-gray-600">{totalQuestions - Object.keys(userAnswers).length}</p>
-                <p className="text-xs text-gray-500">Remaining</p>
+                <p className="text-xs text-gray-500">Left</p>
               </div>
               <div className="text-center">
                 <p className="font-semibold text-indigo-600">
                   {Math.round((Object.keys(userAnswers).length / totalQuestions) * 100)}%
                 </p>
-                <p className="text-xs text-gray-500">Progress</p>
+                <p className="text-xs text-gray-500">Complete</p>
               </div>
             </div>
           </motion.div>

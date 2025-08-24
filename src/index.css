@@ -9,9 +9,52 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent iOS rubber band scrolling */
+  overscroll-behavior: none;
+  /* Prevent text selection on mobile */
+  -webkit-touch-callout: none;
+  /* Improve tap responsiveness on mobile */
+  touch-action: manipulation;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  /* Improve tap targets for mobile */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Optimize font sizes for mobile readability */
+  html {
+    font-size: 16px;
+  }
+  
+  /* Prevent zoom on input focus on iOS */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  
+  /* Better scrolling on mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Disable hover effects on touch devices */
+  @media (hover: none) {
+    button:hover {
+      transform: none !important;
+    }
+  }
 }

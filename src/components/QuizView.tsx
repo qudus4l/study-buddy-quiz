@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpen, Home, Trophy, Target, Clock, RefreshCw, Volume2, VolumeX } from 'lucide-react';
+import { BookOpen, Home, Trophy, Target, Clock, RefreshCw, Volume2, VolumeX, Menu, X } from 'lucide-react';
 import { Question } from '../types/quiz';
 import QuizQuestion from './QuizQuestion';
 import QuizNavigation from './QuizNavigation';
@@ -19,6 +19,7 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [streak, setStreak] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const currentQuestionId = currentQuestion.id;
@@ -37,8 +38,6 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
   // Play sound effect
   const playSound = (type: 'correct' | 'incorrect' | 'select') => {
     if (!soundEnabled) return;
-    // Sound implementation would go here
-    // For now, we'll use the Web Audio API for simple beeps
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -72,7 +71,6 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
       [currentQuestionId]: newShowState,
     }));
 
-    // Update streak when revealing answer
     if (newShowState && userAnswers[currentQuestionId]) {
       const isCorrect = userAnswers[currentQuestionId] === currentQuestion.correctAnswer;
       if (isCorrect) {
@@ -135,36 +133,35 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
 
   // Get motivational message based on performance
   const getMotivationalMessage = () => {
-    if (streak >= 5) return "🔥 You're on fire!";
-    if (streak >= 3) return "💪 Great streak!";
-    if (accuracy >= 80) return "🌟 Excellent work!";
-    if (accuracy >= 60) return "👍 Keep going!";
-    return "📚 Focus and learn!";
+    if (streak >= 5) return "🔥 On fire!";
+    if (streak >= 3) return "💪 Great!";
+    if (accuracy >= 80) return "🌟 Excellent!";
+    if (accuracy >= 60) return "👍 Good!";
+    return "📚 Keep going!";
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Enhanced Header */}
+      {/* Mobile-Optimized Header */}
       <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <BookOpen className="w-6 h-6 text-indigo-600" />
-              <h1 className="text-xl font-bold text-gray-900">Study Buddy</h1>
-              <span className="text-sm text-gray-500">|</span>
-              <span className="text-sm font-medium text-gray-600">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            {/* Logo and Motivational Message */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
+              <h1 className="text-base sm:text-xl font-bold text-gray-900 hidden sm:block">Study Buddy</h1>
+              <span className="text-xs sm:text-sm font-medium text-gray-600">
                 {getMotivationalMessage()}
               </span>
             </div>
             
-            <div className="flex items-center space-x-4">
-              {/* Sound Toggle */}
+            {/* Desktop Controls */}
+            <div className="hidden md:flex items-center space-x-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSoundEnabled(!soundEnabled)}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                title={soundEnabled ? "Mute sounds" : "Enable sounds"}
               >
                 {soundEnabled ? (
                   <Volume2 className="w-5 h-5 text-gray-600" />
@@ -173,7 +170,6 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
                 )}
               </motion.button>
 
-              {/* Study Timer */}
               <div className="flex items-center space-x-2 px-3 py-1 bg-gray-50 rounded-lg">
                 <Clock className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-mono text-gray-700">
@@ -181,7 +177,6 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
                 </span>
               </div>
 
-              {/* Streak Counter */}
               {streak > 0 && (
                 <motion.div
                   initial={{ scale: 0 }}
@@ -203,73 +198,139 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
                 <span className="text-sm font-medium">Upload New</span>
               </motion.button>
             </div>
+
+            {/* Mobile Menu Button */}
+            <div className="flex md:hidden items-center space-x-2">
+              {/* Timer (always visible on mobile) */}
+              <div className="flex items-center space-x-1 px-2 py-1 bg-gray-50 rounded text-xs">
+                <Clock className="w-3 h-3 text-gray-500" />
+                <span className="font-mono text-gray-700">{formatTime(studyTime)}</span>
+              </div>
+              
+              {/* Streak (if active) */}
+              {streak > 0 && (
+                <div className="flex items-center px-2 py-1 bg-orange-50 rounded">
+                  <span className="text-xs">🔥{streak}</span>
+                </div>
+              )}
+
+              {/* Menu Toggle */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-lg hover:bg-gray-100"
+              >
+                {mobileMenuOpen ? (
+                  <X className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <Menu className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+            </div>
           </div>
+
+          {/* Mobile Menu Dropdown */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="md:hidden border-t py-3 space-y-2"
+              >
+                <button
+                  onClick={() => {
+                    setSoundEnabled(!soundEnabled);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-left hover:bg-gray-50 rounded"
+                >
+                  {soundEnabled ? (
+                    <Volume2 className="w-4 h-4 text-gray-600" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 text-gray-400" />
+                  )}
+                  <span className="text-sm">{soundEnabled ? 'Sound On' : 'Sound Off'}</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    onBack();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-left hover:bg-gray-50 rounded"
+                >
+                  <Home className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm">Upload New</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Enhanced Statistics Bar */}
+      {/* Main Content - Mobile Optimized */}
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        {/* Mobile-Optimized Statistics Bar */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-4 gap-4 mb-8"
+          className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-8"
         >
           <motion.div 
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl p-4 text-center shadow-md border border-indigo-100"
+            className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 text-center shadow-sm sm:shadow-md border border-indigo-100"
           >
             <div className="flex flex-col items-center">
-              <BookOpen className="w-5 h-5 text-indigo-500 mb-2" />
-              <p className="text-2xl font-bold text-indigo-600">{questions.length}</p>
-              <p className="text-xs text-gray-600">Total Questions</p>
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500 mb-1 sm:mb-2" />
+              <p className="text-lg sm:text-2xl font-bold text-indigo-600">{questions.length}</p>
+              <p className="text-xs text-gray-600">Total</p>
             </div>
           </motion.div>
           
           <motion.div 
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl p-4 text-center shadow-md border border-green-100"
+            className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 text-center shadow-sm sm:shadow-md border border-green-100"
           >
             <div className="flex flex-col items-center">
-              <Target className="w-5 h-5 text-green-500 mb-2" />
-              <p className="text-2xl font-bold text-green-600">{answeredQuestions}</p>
-              <p className="text-xs text-gray-600">Answered</p>
+              <Target className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mb-1 sm:mb-2" />
+              <p className="text-lg sm:text-2xl font-bold text-green-600">{answeredQuestions}</p>
+              <p className="text-xs text-gray-600">Done</p>
             </div>
           </motion.div>
           
           <motion.div 
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl p-4 text-center shadow-md border border-purple-100"
+            className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 text-center shadow-sm sm:shadow-md border border-purple-100"
           >
             <div className="flex flex-col items-center">
-              <Trophy className="w-5 h-5 text-purple-500 mb-2" />
-              <p className="text-2xl font-bold text-purple-600">
+              <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 mb-1 sm:mb-2" />
+              <p className="text-lg sm:text-2xl font-bold text-purple-600">
                 {accuracy}%
               </p>
-              <p className="text-xs text-gray-600">Accuracy</p>
+              <p className="text-xs text-gray-600">Score</p>
             </div>
           </motion.div>
 
           <motion.div 
             whileHover={{ scale: 1.02 }}
-            className="bg-white rounded-xl p-4 text-center shadow-md border border-orange-100"
+            className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 text-center shadow-sm sm:shadow-md border border-orange-100"
           >
             <div className="flex flex-col items-center">
-              <RefreshCw className="w-5 h-5 text-orange-500 mb-2" />
-              <p className="text-2xl font-bold text-orange-600">{correctAnswers}</p>
-              <p className="text-xs text-gray-600">Correct</p>
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 mb-1 sm:mb-2" />
+              <p className="text-lg sm:text-2xl font-bold text-orange-600">{correctAnswers}</p>
+              <p className="text-xs text-gray-600">Right</p>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Progress Indicator */}
-        <div className="mb-6">
+        {/* Progress Indicator - Mobile Optimized */}
+        <div className="mb-4 sm:mb-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Question {currentQuestionIndex + 1} of {questions.length}
+            <span className="text-xs sm:text-sm font-medium text-gray-700">
+              Q{currentQuestionIndex + 1}/{questions.length}
             </span>
-            <span className="text-sm text-gray-500">
-              {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% Complete
+            <span className="text-xs sm:text-sm text-gray-500">
+              {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%
             </span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -294,8 +355,8 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
           />
         </AnimatePresence>
 
-        {/* Navigation */}
-        <div className="mt-8">
+        {/* Navigation - Mobile Optimized */}
+        <div className="mt-4 sm:mt-8">
           <QuizNavigation
             currentIndex={currentQuestionIndex}
             totalQuestions={questions.length}
@@ -309,19 +370,19 @@ const QuizView: React.FC<QuizViewProps> = ({ questions, onBack }) => {
           />
         </div>
 
-        {/* Completion Message */}
+        {/* Completion Message - Mobile Optimized */}
         {answeredQuestions === questions.length && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-8 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white text-center shadow-xl"
+            className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white text-center shadow-xl"
           >
-            <Trophy className="w-12 h-12 mx-auto mb-3" />
-            <h2 className="text-2xl font-bold mb-2">Quiz Complete! 🎉</h2>
-            <p className="text-lg mb-1">
+            <Trophy className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3" />
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">Quiz Complete! 🎉</h2>
+            <p className="text-base sm:text-lg mb-1">
               You scored {correctAnswers} out of {questions.length} ({accuracy}%)
             </p>
-            <p className="text-sm opacity-90">
+            <p className="text-xs sm:text-sm opacity-90">
               Study time: {formatTime(studyTime)}
             </p>
           </motion.div>
