@@ -1,5 +1,9 @@
 import mammoth from 'mammoth';
+import * as pdfjsLib from 'pdfjs-dist';
 import { Question, Option } from '../types/quiz';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export class DocumentParser {
   private static extractQuestionsFromText(text: string): Question[] {
@@ -96,10 +100,10 @@ export class DocumentParser {
         continue;
       }
       
-      // Check for options - handle various formats
-      const optionMatch = line.match(/^([A-E])[.:)\s]+(.+)/i) ||
-                         line.match(/^\(([A-E])\)\s*(.+)/i) ||
-                         line.match(/^([A-E])\)\s*(.+)/i);
+      // Check for options - handle various formats including lowercase
+      const optionMatch = line.match(/^([A-Ea-e])[.:)\s]+(.+)/i) ||
+                         line.match(/^\(([A-Ea-e])\)\s*(.+)/i) ||
+                         line.match(/^([A-Ea-e])\)\s*(.+)/i);
       
       if (optionMatch && currentQuestion) {
         collectingQuestion = false;
@@ -119,9 +123,10 @@ export class DocumentParser {
         continue;
       }
       
-      // Check for inline answer indicators - handle extra spaces after colon
-      // Pattern matches "ANSWER:  B" format with multiple spaces
-      const answerMatch = line.match(/ANSWER\s*:\s*([A-E])/i);
+      // Check for inline answer indicators - handle various formats
+      // Pattern matches "ANSWER: B" or "Answer: b)" formats with the answer text
+      const answerMatch = line.match(/Answer\s*:\s*([A-Ea-e])\)/i) || 
+                         line.match(/ANSWER\s*:\s*([A-Ea-e])/i);
       if (answerMatch && currentQuestion) {
         currentQuestion.correctAnswer = answerMatch[1].toUpperCase();
         collectingQuestion = false;  // Stop collecting question text
@@ -217,24 +222,50 @@ export class DocumentParser {
   }
   
   static async parsePdf(file: File): Promise<Question[]> {
-    // For PDF parsing, we'll use a simpler approach
-    // In a production app, you'd want to use pdf.js or similar
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
       reader.onload = async (e) => {
         try {
-          // This is a placeholder - in production, you'd use proper PDF parsing
-          // For now, we'll focus on DOCX since that's what the sample files are
-          console.log('PDF parsing not fully implemented yet');
-          resolve([]);
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          
+          // Load the PDF document
+          const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+          const pdf = await loadingTask.promise;
+          
+          let fullText = '';
+          
+          // Extract text from all pages
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            
+            // Concatenate all text items
+            const pageText = textContent.items
+              .map((item: any) => item.str)
+              .join(' ');
+            
+            fullText += pageText + '\n';
+          }
+          
+          // Clean up the text - handle PDF text extraction quirks
+          fullText = fullText
+            .replace(/\s+/g, ' ')  // Normalize whitespace
+            .replace(/([a-e])\)\s*([^\n]+?)\s*(?=[a-e]\)|Answer:|\d+\.|$)/gi, '$1) $2\n')  // Fix option formatting
+            .replace(/(\d+\.\s*[^\n]+?)\s*(?=a\)|Answer:)/gi, '$1\n')  // Fix question formatting
+            .replace(/Answer:\s*([a-e])\)\s*/gi, '\nAnswer: $1) ')  // Fix answer formatting
+            .replace(/\s*(\d+\.)/g, '\n$1');  // Ensure questions start on new lines
+          
+          const questions = this.extractQuestionsFromText(fullText);
+          resolve(questions);
         } catch (error) {
+          console.error('Error parsing PDF:', error);
           reject(error);
         }
       };
       
       reader.onerror = () => {
-        reject(new Error('Failed to read file'));
+        reject(new Error('Failed to read PDF file'));
       };
       
       reader.readAsArrayBuffer(file);
