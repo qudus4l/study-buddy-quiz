@@ -22,6 +22,11 @@ export class DocumentParser {
     const answerKey: { [key: number]: string } = {};
     let answerSectionStart = -1;
     
+    // Check if this is SHIT.docx format with inline answers
+    const hasInlineAnswers = lines.some(line => 
+      line.match(/^\d+\)\s*Q\./i) || line.match(/[A-E]\..*\s+[A-E]\s*$/)
+    );
+    
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].toLowerCase().includes('answer key') || 
           lines[i].toLowerCase().includes('answers:') ||
@@ -48,8 +53,10 @@ export class DocumentParser {
         break;
       }
       
-      // Check if line starts with a question number - more flexible patterns
-      const questionMatch = line.match(/^(?:Question\s*)?(?:Q\.?\s*)?(\d+)[.:)\s]+(.+)/i) ||
+      // Check if line starts with a question number - updated patterns for new formats
+      const questionMatch = line.match(/^(\d+)\)\s*Q\.\s*(.+)/i) ||  // SHIT.docx format: 1)Q. or 1) Q.
+                           line.match(/^(\d+)\)\s*(.+)/) ||              // PDF format: 1) Question
+                           line.match(/^(?:Question\s*)?(\d+)[.:)\s]+(.+)/i) ||
                            line.match(/^(\d+)\.\s*(.+)/) ||
                            line.match(/^Q(\d+)[:.\s]+(.+)/i) ||
                            line.match(/^Q:\s*(.+)/i);  // Handle "Q:" format without number
@@ -101,17 +108,27 @@ export class DocumentParser {
       }
       
       // Check for options - handle various formats including lowercase
-      const optionMatch = line.match(/^([A-Ea-e])[.:)\s]+(.+)/i) ||
-                         line.match(/^\(([A-Ea-e])\)\s*(.+)/i) ||
-                         line.match(/^([A-Ea-e])\)\s*(.+)/i);
+      const optionMatch = line.match(/^([A-Ea-e])\)\s*(.+)/i) ||      // PDF format: A) option
+                         line.match(/^([A-Ea-e])\.\s*(.+)/i) ||       // DOCX format: A. option
+                         line.match(/^([A-Ea-e])[.:)\s]+(.+)/i) ||
+                         line.match(/^\(([A-Ea-e])\)\s*(.+)/i);
       
       if (optionMatch && currentQuestion) {
         collectingQuestion = false;
         const letter = optionMatch[1].toUpperCase();
         let text = optionMatch[2].trim();
         
+        // Check for inline answer at the end (SHIT.docx format)
+        // Format: "D. option text.  C" where C is the answer
+        const inlineAnswerMatch = text.match(/^(.+?)\s+([A-E])\s*$/i);
+        if (hasInlineAnswers && inlineAnswerMatch) {
+          text = inlineAnswerMatch[1].trim();
+          currentQuestion.correctAnswer = inlineAnswerMatch[2].toUpperCase();
+        }
+        
         // Remove any answer indicators from the option text
         text = text.replace(/[✓✔✅]/g, '').trim();
+        text = text.replace(/\.\s*[A-E]\s*$/, '.').trim(); // Remove trailing answer letters
         
         // Check if this option is marked as correct
         if (line.includes('✓') || line.includes('✔') || line.includes('✅') || 
@@ -124,24 +141,39 @@ export class DocumentParser {
       }
       
       // Check for inline answer indicators - handle various formats
-      // Pattern matches "ANSWER: B" or "Answer: b)" formats with the answer text
-      const answerMatch = line.match(/Answer\s*:\s*([A-Ea-e])\)/i) || 
-                         line.match(/ANSWER\s*:\s*([A-Ea-e])/i);
+      // Pattern matches "Answer: B" or "ANSWER: B" formats
+      const answerMatch = line.match(/^Answer\s*:\s*([A-Ea-e])\s*/i) || 
+                         line.match(/^ANSWER\s*:\s*([A-Ea-e])\s*/i);
       if (answerMatch && currentQuestion) {
         currentQuestion.correctAnswer = answerMatch[1].toUpperCase();
         collectingQuestion = false;  // Stop collecting question text
         continue;
       }
       
+      // Also check for standalone answer letters at end of line (SHIT.docx format)
+      if (hasInlineAnswers && currentQuestion && options.length === 4) {
+        const standaloneAnswer = line.match(/^([A-E])\s*$/i);
+        if (standaloneAnswer) {
+          currentQuestion.correctAnswer = standaloneAnswer[1].toUpperCase();
+          continue;
+        }
+      }
+      
       // If we're collecting question text and haven't hit options yet
       if (collectingQuestion && currentQuestion && !optionMatch && !answerMatch) {
-        // Don't add lines that look like they might be instructions or headers
+        // Don't add lines that look like they might be instructions or headers or metadata
         if (!line.toLowerCase().includes('instructions') && 
             !line.toLowerCase().includes('section') &&
             !line.toLowerCase().includes('part') &&
+            !line.match(/^(Diff:|Skill:|Objective:|Learning Outcome:|AACSB:)/i) &&
             line.length > 2) {
           questionText += ' ' + line;
         }
+      }
+      
+      // Skip metadata lines from PDFs
+      if (line.match(/^(Diff:|Skill:|Objective:|Learning Outcome:|AACSB:)/i)) {
+        continue;
       }
     }
     
@@ -251,10 +283,10 @@ export class DocumentParser {
           // Clean up the text - handle PDF text extraction quirks
           fullText = fullText
             .replace(/\s+/g, ' ')  // Normalize whitespace
-            .replace(/([a-e])\)\s*([^\n]+?)\s*(?=[a-e]\)|Answer:|\d+\.|$)/gi, '$1) $2\n')  // Fix option formatting
-            .replace(/(\d+\.\s*[^\n]+?)\s*(?=a\)|Answer:)/gi, '$1\n')  // Fix question formatting
-            .replace(/Answer:\s*([a-e])\)\s*/gi, '\nAnswer: $1) ')  // Fix answer formatting
-            .replace(/\s*(\d+\.)/g, '\n$1');  // Ensure questions start on new lines
+            .replace(/([A-E])\)\s*/g, '\n$1) ')  // Ensure options start on new lines
+            .replace(/(\d+)\)\s*/g, '\n$1) ')  // Ensure questions start on new lines
+            .replace(/Answer\s*:\s*/gi, '\nAnswer: ')  // Ensure answers are on new lines
+            .replace(/\s*(Diff:|Skill:|Objective:|Learning Outcome:|AACSB:)/gi, '\n$1');  // Separate metadata
           
           const questions = this.extractQuestionsFromText(fullText);
           resolve(questions);
