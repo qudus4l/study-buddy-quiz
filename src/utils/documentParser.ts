@@ -7,6 +7,100 @@ import { findAnswerForQuestion } from './fba429AnswerKey';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export class DocumentParser {
+  private static extractQuestionsFromHtml(html: string): Question[] {
+    const questions: Question[] = [];
+    
+    // Parse HTML to extract questions with bold answers
+    // Questions are in <p> tags with format: <strong>Q1.</strong> Question text<br />Options...
+    const paragraphs = html.split('</p>').filter(p => p.includes('<strong>Q'));
+    
+    paragraphs.forEach((paragraph, index) => {
+      // Extract question number - handle both Q1. and just numbered questions that restart
+      const questionNumMatch = paragraph.match(/<strong>Q(\d+)\.<\/strong>/i);
+      if (!questionNumMatch) return;
+      
+      const questionNumber = parseInt(questionNumMatch[1]);
+      
+      // Split by <br /> to get individual lines
+      const lines = paragraph.split(/<br\s*\/?>/g);
+      if (lines.length < 2) return; // Need at least question and one option
+      
+      // First line contains the question
+      const questionLine = lines[0];
+      const questionTextMatch = questionLine.match(/<strong>Q\d+\.<\/strong>\s*(.+)/);
+      if (!questionTextMatch) return;
+      
+      // Clean question text
+      let questionText = questionTextMatch[1]
+        .replace(/<\/?[^>]+(>|$)/g, '') // Remove all HTML tags
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .trim();
+      
+      // Extract options from remaining lines
+      const options: Option[] = [];
+      let correctAnswer = '';
+      
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Match option pattern: A. Option text (may be bolded)
+        const normalOptionMatch = line.match(/^([A-E])\.\s*(.+)/);
+        const boldOptionMatch = line.match(/^<strong>([A-E])\.\s*(.+)<\/strong>/);
+        
+        if (normalOptionMatch || boldOptionMatch) {
+          let letter: string;
+          let optionText: string;
+          
+          if (boldOptionMatch) {
+            // This is the correct answer (it's bolded)
+            letter = boldOptionMatch[1];
+            optionText = boldOptionMatch[2];
+            correctAnswer = letter;
+          } else if (normalOptionMatch) {
+            letter = normalOptionMatch[1];
+            optionText = normalOptionMatch[2];
+            
+            // Check if the entire option content is wrapped in strong tags
+            if (line.includes('<strong>') && line.includes('</strong>')) {
+              correctAnswer = letter;
+            }
+          } else {
+            continue;
+          }
+          
+          // Clean option text
+          optionText = optionText
+            .replace(/<\/?[^>]+(>|$)/g, '') // Remove all HTML tags
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .trim();
+          
+          options.push({ letter, text: optionText });
+        }
+      }
+      
+      if (questionText && options.length > 0) {
+        questions.push({
+          id: questionNumber,
+          questionNumber,
+          text: questionText,
+          options,
+          correctAnswer
+        });
+      }
+    });
+    
+    return questions;
+  }
+  
   private static extractQuestionsFromText(text: string, fileName?: string): Question[] {
     const questions: Question[] = [];
     
@@ -265,8 +359,34 @@ export class DocumentParser {
       reader.onload = async (e) => {
         try {
           const arrayBuffer = e.target?.result as ArrayBuffer;
-          const result = await mammoth.extractRawText({ arrayBuffer });
-          const questions = this.extractQuestionsFromText(result.value, file.name);
+          
+          // First try to extract HTML to preserve bold formatting
+          const htmlResult = await mammoth.convertToHtml({ 
+            arrayBuffer,
+            styleMap: [
+              "b => b",
+              "strong => strong"
+            ]
+          });
+          
+          // Check if this is a file with bold answers
+          if (htmlResult.value.includes('<strong>') && 
+              (htmlResult.value.includes('<strong>Q') || 
+               htmlResult.value.includes('<strong>A.') ||
+               htmlResult.value.includes('<strong>B.') ||
+               htmlResult.value.includes('<strong>C.') ||
+               htmlResult.value.includes('<strong>D.'))) {
+            // Parse HTML format with bold answers
+            const questions = this.extractQuestionsFromHtml(htmlResult.value);
+            if (questions.length > 0) {
+              resolve(questions);
+              return;
+            }
+          }
+          
+          // Fallback to text extraction for other formats
+          const textResult = await mammoth.extractRawText({ arrayBuffer });
+          const questions = this.extractQuestionsFromText(textResult.value, file.name);
           resolve(questions);
         } catch (error) {
           reject(error);
