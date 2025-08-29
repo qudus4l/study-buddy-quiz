@@ -362,12 +362,8 @@ export class DocumentParser {
           
           // First try to extract HTML to preserve bold formatting
           const htmlResult = await mammoth.convertToHtml({ 
-            arrayBuffer,
-            styleMap: [
-              "b => b",
-              "strong => strong"
-            ]
-          });
+            arrayBuffer
+          } as any);
           
           // Check if this is a file with bold answers
           if (htmlResult.value.includes('<strong>') && 
