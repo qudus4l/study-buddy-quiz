@@ -1,47 +1,42 @@
-# Study Buddy Quiz
+# 📚 Study Buddy Quiz
 
-<div align="center">
-  
-  ![Study Buddy Quiz Logo](https://img.shields.io/badge/Study%20Buddy-Quiz%20App-blue?style=for-the-badge)
-  ![React](https://img.shields.io/badge/React-18.2-61DAFB?style=flat-square&logo=react)
-  ![TypeScript](https://img.shields.io/badge/TypeScript-4.9-3178C6?style=flat-square&logo=typescript)
-  ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwindcss)
-  ![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?style=flat-square&logo=openai)
-  
-  **Transform your study materials into interactive, AI-powered quizzes**
-  
-  [Demo](https://study-buddy-quiz.vercel.app) · [Report Bug](https://github.com/yourusername/study-buddy-quiz/issues) · [Request Feature](https://github.com/yourusername/study-buddy-quiz/issues)
+An intelligent quiz application that transforms your study materials into interactive quizzes with AI-powered explanations. Upload PDF or DOCX files and start practicing immediately!
 
-</div>
+## ✨ Features
 
-## 📖 Overview
+- **📄 Document Upload**: Support for PDF and DOCX files
+- **🎯 Smart Question Parsing**: Automatically extracts questions and answers from various formats
+  - Standard numbered questions (1., 2., 3.)
+  - Q-format questions (Q1., Q2., Q3.)
+  - Bolded answers in DOCX files
+  - Answer key sections
+- **🤖 AI-Powered Explanations**: Get detailed explanations for any question using OpenAI
+- **📊 Progress Tracking**: Monitor your quiz performance and review history
+- **🎨 Modern UI**: Clean, responsive interface built with React and Tailwind CSS
+- **💾 Local Storage**: Your quiz progress is automatically saved
+- **🔀 Smart Randomization**: Questions and answer options can be shuffled for better practice
 
-Study Buddy Quiz is a modern web application that converts your study documents (PDF/DOCX) into interactive quizzes with AI-powered explanations. Built with React and TypeScript, it features a beautiful UI, smart document parsing, and OpenAI integration for personalized learning assistance.
+## 🛠️ Tech Stack
 
-## ✨ Key Features
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **Document Processing**: 
+  - `mammoth` for DOCX parsing
+  - `pdfjs-dist` for PDF parsing
+- **AI Integration**: OpenAI API for explanations
+- **Deployment**: Vercel
+- **State Management**: React Hooks with localStorage persistence
 
-- **📄 Smart Document Parser** - Automatically extracts questions and answers from PDF/DOCX files
-- **🤖 AI-Powered Learning** - Get personalized explanations and hints powered by OpenAI
-- **🎲 Dual Randomization** - Shuffle both question order and answer positions for better learning
-- **📊 Progress Tracking** - Real-time accuracy calculation and study time monitoring
-- **💾 Local Persistence** - Saves your progress automatically
-- **📱 Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
-- **⌨️ Keyboard Shortcuts** - Navigate efficiently with keyboard controls
-- **🎨 Modern UI** - Beautiful animations and transitions with Framer Motion
+## 📋 Prerequisites
 
-## 🚀 Getting Started
+- Node.js 14+ and npm
+- OpenAI API key (for AI explanations feature)
+- Git (for version control)
 
-### Prerequisites
-
-- Node.js 16.x or higher
-- npm or yarn package manager
-- OpenAI API key (for AI features)
-
-### Installation
+## 🚀 Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/study-buddy-quiz.git
+   git clone https://github.com/qudus4l/study-buddy-quiz.git
    cd study-buddy-quiz
    ```
 
@@ -56,163 +51,184 @@ Study Buddy Quiz is a modern web application that converts your study documents 
    ```
    Edit `.env` and add your OpenAI API key:
    ```
-   REACT_APP_OPENAI_API_KEY=your_api_key_here
+   REACT_APP_OPENAI_API_KEY=your_openai_api_key_here
    ```
 
 4. **Start the development server**
    ```bash
    npm start
    ```
-   The app will open at http://localhost:3000
+   The app will open at [http://localhost:3000](http://localhost:3000)
 
-## 🎯 Usage
+## 🔧 Configuration
 
-### Basic Workflow
+### OpenAI API Setup
 
-1. **Upload Document** - Drag and drop or browse for a DOCX/PDF file containing questions
-2. **Configure Options** - Toggle randomization settings before starting
-3. **Take Quiz** - Answer questions, get instant feedback
-4. **Review & Learn** - View explanations for incorrect answers
-5. **Track Progress** - Monitor accuracy and study time
+1. Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Add it to your `.env` file as shown above
+3. The app uses GPT-3.5-turbo by default for cost-effectiveness
 
-### Supported Document Formats
+### Environment Variables
 
-The parser recognizes various question formats:
-- Questions starting with `Q:` or numbered (1., 2., etc.)
-- Multiple choice options as `A.`, `B)`, `(C)`, etc.
-- Answers marked as `ANSWER: B` or similar patterns
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `REACT_APP_OPENAI_API_KEY` | Your OpenAI API key | Yes (for explanations) |
 
-### Keyboard Shortcuts
+## 📖 Usage Guide
 
-- `←` / `→` - Navigate between questions
-- `A-E` - Select answer options
-- `Space` - Show/hide answer
-- `G` - Open grid navigation
-- `R` - Reshuffle questions
+### Uploading Documents
 
-## 🏗️ Architecture
+1. Click the "Upload Document" button on the home page
+2. Select a PDF or DOCX file containing quiz questions
+3. Wait for the file to be processed
+4. Start taking the quiz!
 
-### Tech Stack
+### Document Format Requirements
 
-- **Frontend Framework**: React 18 with TypeScript
-- **Styling**: Tailwind CSS + Framer Motion
-- **Document Parsing**: Mammoth.js for DOCX
-- **AI Integration**: OpenAI API
-- **State Management**: React Hooks + Local Storage
-- **Build Tool**: Create React App
-- **Deployment**: Vercel
+The app supports various question formats:
 
-### Project Structure
-
+#### Standard Format
 ```
-study-buddy-quiz/
-├── src/
-│   ├── components/        # React components
-│   │   ├── FileUpload.tsx
-│   │   ├── QuizView.tsx
-│   │   ├── QuizQuestion.tsx
-│   │   └── QuizNavigation.tsx
-│   ├── services/          # External services
-│   │   └── openaiService.ts
-│   ├── utils/             # Utility functions
-│   │   ├── documentParser.ts
-│   │   ├── randomizeOptions.ts
-│   │   └── shuffleArray.ts
-│   ├── hooks/             # Custom React hooks
-│   │   └── useLocalStorage.ts
-│   ├── types/             # TypeScript definitions
-│   │   └── quiz.ts
-│   └── App.tsx            # Main application
-├── public/                # Static assets
-└── package.json          # Dependencies
+1. What is the capital of France?
+A. London
+B. Paris
+C. Berlin
+D. Madrid
+
+Answer: B
 ```
 
-## 🚢 Deployment
+#### Q-Format (with bolded answers in DOCX)
+```
+Q1. What is React?
+A. A database
+**B. A JavaScript library**
+C. A programming language
+D. An operating system
+```
+
+#### With Answer Key Section
+```
+Questions:
+1. Question text...
+2. Question text...
+
+Answer Key:
+1. B
+2. C
+```
+
+### Taking Quizzes
+
+- **Navigate**: Use Previous/Next buttons or keyboard shortcuts
+- **Submit Answer**: Click on an option to select it
+- **Get Explanation**: Click "Explain" for AI-powered explanations
+- **Review**: Check your answers after completing the quiz
+- **Retry**: Reset and take the quiz again with shuffled questions
+
+## 🌐 Deployment
 
 ### Deploy to Vercel
 
-1. **Fork this repository**
+1. **Fork this repository** to your GitHub account
 
-2. **Connect to Vercel**
-   - Go to [vercel.com](https://vercel.com)
+2. **Sign up/Login** to [Vercel](https://vercel.com)
+
+3. **Import the project**:
+   - Click "New Project"
    - Import your forked repository
-   - Configure environment variables
+   - Configure environment variables in Vercel dashboard
 
-3. **Environment Setup**
-   ```
-   REACT_APP_OPENAI_API_KEY = your_openai_api_key
-   ```
+4. **Deploy**: Vercel will automatically build and deploy your app
 
-4. **Deploy**
-   - Click "Deploy"
-   - Your app will be live at `https://your-app.vercel.app`
-
-For detailed deployment instructions, see [DEPLOY_TO_VERCEL.md](./DEPLOY_TO_VERCEL.md)
-
-### Build for Production
+### Manual Deployment
 
 ```bash
+# Build for production
 npm run build
+
+# The build folder is ready to be deployed
+# You can serve it with any static hosting service
 ```
 
-This creates an optimized production build in the `build` folder.
+## 🏗️ Project Structure
 
-## 🧪 Development
-
-### Available Scripts
-
-```bash
-npm start       # Start development server
-npm run build   # Create production build
-npm test        # Run test suite
-npm run eject   # Eject from Create React App (one-way operation)
 ```
-
-### API Configuration
-
-The app uses OpenAI's GPT model for generating explanations. Configure your API key in the `.env` file:
-
-```env
-REACT_APP_OPENAI_API_KEY=sk-...
+study-buddy-quiz/
+├── public/             # Static files
+├── src/
+│   ├── components/     # React components
+│   │   ├── FileUpload.tsx
+│   │   ├── QuizNavigation.tsx
+│   │   ├── QuizQuestion.tsx
+│   │   └── QuizView.tsx
+│   ├── hooks/          # Custom React hooks
+│   │   └── useLocalStorage.ts
+│   ├── services/       # External service integrations
+│   │   └── openaiService.ts
+│   ├── types/          # TypeScript type definitions
+│   │   └── quiz.ts
+│   ├── utils/          # Utility functions
+│   │   ├── documentParser.ts
+│   │   ├── randomizeOptions.ts
+│   │   └── shuffleArray.ts
+│   ├── App.tsx         # Main app component
+│   └── index.tsx       # App entry point
+├── .env.example        # Environment variables template
+├── package.json        # Dependencies and scripts
+├── tailwind.config.js  # Tailwind CSS configuration
+├── tsconfig.json       # TypeScript configuration
+└── vercel.json         # Vercel deployment settings
 ```
-
-API calls are optimized to only generate explanations for incorrect answers, reducing costs.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
 ### Development Guidelines
 
 - Follow the existing code style
-- Write meaningful commit messages
-- Add tests for new features
+- Add comments for complex logic
+- Test your changes thoroughly
 - Update documentation as needed
 
-## 📝 License
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Build fails with TypeScript errors**
+- Ensure all dependencies are installed: `npm install`
+- Clear the build cache: `rm -rf node_modules && npm install`
+
+**Questions not parsing correctly**
+- Check that your document follows one of the supported formats
+- Ensure answers are clearly marked (bolded in DOCX or in answer key)
+
+**OpenAI explanations not working**
+- Verify your API key is correctly set in `.env`
+- Check your OpenAI account has available credits
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- [OpenAI](https://openai.com) for GPT API
-- [Mammoth.js](https://github.com/mwilliamson/mammoth.js) for DOCX parsing
-- [Framer Motion](https://www.framer.com/motion/) for animations
-- [Tailwind CSS](https://tailwindcss.com) for styling
-- [Lucide React](https://lucide.dev) for icons
+- Built with [Create React App](https://create-react-app.dev/)
+- Document parsing powered by [Mammoth.js](https://github.com/mwilliamson/mammoth.js) and [PDF.js](https://mozilla.github.io/pdf.js/)
+- AI explanations by [OpenAI](https://openai.com)
+- Deployed on [Vercel](https://vercel.com)
 
-## 📧 Contact
+## 📞 Support
 
-For questions or support, please open an issue on GitHub.
+For issues, questions, or suggestions, please [open an issue](https://github.com/qudus4l/study-buddy-quiz/issues) on GitHub.
 
 ---
 
-<div align="center">
-  Made with ❤️ by the Study Buddy Team
-</div>
+Made with ❤️ for better studying
