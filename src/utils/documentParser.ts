@@ -10,13 +10,22 @@ export class DocumentParser {
   private static extractQuestionsFromText(text: string, fileName?: string): Question[] {
     const questions: Question[] = [];
     
+    // Pre-process text to ensure proper line breaks for different formats
+    // This is especially important for FBA429 which may not have line breaks
+    let processedText = text;
+    
+    // Add line breaks for Q. format questions and A. B. C. D. options
+    processedText = processedText
+      .replace(/Q\./g, '\nQ.')  // Add line break before each Q.
+      .replace(/([A-E]\.)\s*([^A-E])/g, '\n$1 $2');  // Add line break before A., B., etc.
+    
     // Check if this is the FBA429 PDF with colored answers
     const isFBA429 = fileName?.toLowerCase().includes('fba429') || 
                      text.includes('IMF head office') || 
-                     (text.match(/^Q\./gm) || []).length > 10;
+                     (processedText.match(/^Q\./gm) || []).length > 10;
     
     // Split text into lines for processing
-    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line);
+    const lines = processedText.split(/\r?\n/).map(line => line.trim()).filter(line => line);
     
     let currentQuestion: Partial<Question> | null = null;
     let questionText = '';
@@ -300,10 +309,13 @@ export class DocumentParser {
           }
           
           // Clean up the text - handle PDF text extraction quirks
+          // First, add line breaks for Q. format (FBA429 style) BEFORE normalizing spaces
           fullText = fullText
+            .replace(/Q\./g, '\nQ.')  // Add line break before each Q.
+            .replace(/([A-E]\.)\s*([^A-E])/g, '\n$1 $2')  // Add line break before A., B., etc.
             .replace(/\s+/g, ' ')  // Normalize whitespace
-            .replace(/([A-E])\)\s*/g, '\n$1) ')  // Ensure options start on new lines
-            .replace(/(\d+)\)\s*/g, '\n$1) ')  // Ensure questions start on new lines
+            .replace(/([A-E])\)\s*/g, '\n$1) ')  // Ensure options with ) start on new lines
+            .replace(/(\d+)\)\s*/g, '\n$1) ')  // Ensure numbered questions start on new lines
             .replace(/Answer\s*:\s*/gi, '\nAnswer: ')  // Ensure answers are on new lines
             .replace(/\s*(Diff:|Skill:|Objective:|Learning Outcome:|AACSB:)/gi, '\n$1');  // Separate metadata
           
