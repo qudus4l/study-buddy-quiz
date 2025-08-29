@@ -1,13 +1,19 @@
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Question, Option } from '../types/quiz';
+import { findAnswerForQuestion } from './fba429AnswerKey';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export class DocumentParser {
-  private static extractQuestionsFromText(text: string): Question[] {
+  private static extractQuestionsFromText(text: string, fileName?: string): Question[] {
     const questions: Question[] = [];
+    
+    // Check if this is the FBA429 PDF with colored answers
+    const isFBA429 = fileName?.toLowerCase().includes('fba429') || 
+                     text.includes('IMF head office') || 
+                     (text.match(/^Q\./gm) || []).length > 10;
     
     // Split text into lines for processing
     const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line);
@@ -56,6 +62,7 @@ export class DocumentParser {
       // Check if line starts with a question number - updated patterns for new formats
       const questionMatch = line.match(/^(\d+)\)\s*Q\.\s*(.+)/i) ||  // SHIT.docx format: 1)Q. or 1) Q.
                            line.match(/^(\d+)\)\s*(.+)/) ||              // PDF format: 1) Question
+                           line.match(/^Q\.\s*(.+)/i) ||                  // FBA429 format: Q. Question
                            line.match(/^(?:Question\s*)?(\d+)[.:)\s]+(.+)/i) ||
                            line.match(/^(\d+)\.\s*(.+)/) ||
                            line.match(/^Q(\d+)[:.\s]+(.+)/i) ||
@@ -87,7 +94,7 @@ export class DocumentParser {
           questionNumber = parseInt(questionMatch[1]);
           qText = questionMatch[2] || '';
         } else {
-          // No number (Q: format)
+          // No number (Q. or Q: format)
           questionCounter++;
           questionNumber = questionCounter;
           qText = questionMatch[1] || questionMatch[2] || '';
@@ -193,6 +200,18 @@ export class DocumentParser {
       questions.push(currentQuestion as Question);
     }
     
+    // For FBA429 PDF, apply the answer key
+    if (isFBA429) {
+      questions.forEach(q => {
+        if (!q.correctAnswer || q.correctAnswer === '') {
+          const answer = findAnswerForQuestion(q.text);
+          if (answer) {
+            q.correctAnswer = answer;
+          }
+        }
+      });
+    }
+    
     return questions;
   }
   
@@ -238,7 +257,7 @@ export class DocumentParser {
         try {
           const arrayBuffer = e.target?.result as ArrayBuffer;
           const result = await mammoth.extractRawText({ arrayBuffer });
-          const questions = this.extractQuestionsFromText(result.value);
+          const questions = this.extractQuestionsFromText(result.value, file.name);
           resolve(questions);
         } catch (error) {
           reject(error);
@@ -288,7 +307,7 @@ export class DocumentParser {
             .replace(/Answer\s*:\s*/gi, '\nAnswer: ')  // Ensure answers are on new lines
             .replace(/\s*(Diff:|Skill:|Objective:|Learning Outcome:|AACSB:)/gi, '\n$1');  // Separate metadata
           
-          const questions = this.extractQuestionsFromText(fullText);
+          const questions = this.extractQuestionsFromText(fullText, file.name);
           resolve(questions);
         } catch (error) {
           console.error('Error parsing PDF:', error);
